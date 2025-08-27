@@ -31,9 +31,24 @@ function get_timezone(): string
         }
     }
 
+    // Try macOS timezone detection via /etc/localtime symlink
+    if (file_exists('/etc/localtime') && is_link('/etc/localtime')) {
+        $link_target = readlink('/etc/localtime');
+        if ($link_target !== false) {
+            // Extract timezone from paths like /var/db/timezone/zoneinfo/Europe/Madrid
+            if (preg_match('/\/zoneinfo\/(.+)$/', $link_target, $matches)) {
+                return $matches[1];
+            }
+            // Also handle paths like /usr/share/zoneinfo/Europe/Madrid  
+            if (preg_match('/\/usr\/share\/zoneinfo\/(.+)$/', $link_target, $matches)) {
+                return $matches[1];
+            }
+        }
+    }
+
     // Try to get timezone from PHP default
     $timezone = date_default_timezone_get();
-    if (!empty($timezone)) {
+    if (!empty($timezone) && $timezone !== 'UTC') {
         return $timezone;
     }
 
