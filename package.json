@@ -1,0 +1,32 @@
+{
+    "name": "timelog",
+    "version": "0.0.1",
+    "description": "timelog is a time logging command (inspired by gtimelog)",
+    "lint-staged": {
+        "*.php": [
+            "prettier --write"
+        ],
+        "*.json": [
+            "prettier --write"
+        ],
+        "*.js": [
+            "prettier --write"
+        ],
+        "*.mjs": [
+            "prettier --write"
+        ]
+    },
+    "author": "Kuno Woudt <kuno@frob.nl>",
+    "license": "AGPLv3-or-later",
+    "repository": "https://github.com/warpr/timelog.git",
+    "type": "module",
+    "devDependencies": {
+        "@prettier/plugin-php": "^0.21.0",
+        "lint-staged": "^15.1.0",
+        "prettier": "^3.0.3"
+    },
+    "scripts": {
+        "postinstall": "git config --local core.hooksPath etc/hooks",
+        "test": "ava"
+    }
+}
