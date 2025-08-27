@@ -34,6 +34,17 @@ function extract_date_from_log_line(string $line): ?string
     return null;
 }
 
+function get_log_file_path(): string
+{
+    $home_dir = getenv('HOME');
+    if ($home_dir === false) {
+        echo "Error: Could not determine home directory\n";
+        exit(1);
+    }
+
+    return $home_dir . '/timelog.txt';
+}
+
 function main(): void
 {
     global $argv;
@@ -47,13 +58,7 @@ function main(): void
     $timestamp = date('Y-m-d H:i');
     $current_date = date('Y-m-d');
 
-    $home_dir = getenv('HOME');
-    if ($home_dir === false) {
-        echo "Error: Could not determine home directory\n";
-        exit(1);
-    }
-
-    $log_file = $home_dir . '/timelog.txt';
+    $log_file = get_log_file_path();
 
     $last_line = get_last_log_line($log_file);
     $add_day_separator = false;
