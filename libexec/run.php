@@ -12,6 +12,28 @@
 
 declare(strict_types=1);
 
+function get_last_log_line(string $log_file): ?string
+{
+    if (!file_exists($log_file)) {
+        return null;
+    }
+
+    $file = file($log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($file === false || empty($file)) {
+        return null;
+    }
+
+    return end($file);
+}
+
+function extract_date_from_log_line(string $line): ?string
+{
+    if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $line, $matches)) {
+        return $matches[1];
+    }
+    return null;
+}
+
 function main(): void
 {
     global $argv;
@@ -22,8 +44,8 @@ function main(): void
     }
 
     $activity = implode(' ', array_slice($argv, 1));
-    $timestamp = date('Y-m-d H:i:s');
-    $log_entry = $timestamp . ': ' . $activity . "\n";
+    $timestamp = date('Y-m-d H:i');
+    $current_date = date('Y-m-d');
 
     $home_dir = getenv('HOME');
     if ($home_dir === false) {
@@ -32,6 +54,21 @@ function main(): void
     }
 
     $log_file = $home_dir . '/timelog.txt';
+
+    $last_line = get_last_log_line($log_file);
+    $add_day_separator = false;
+
+    if ($last_line !== null) {
+        $last_date = extract_date_from_log_line($last_line);
+        if ($last_date !== null && $last_date !== $current_date) {
+            $add_day_separator = true;
+        }
+    }
+
+    $log_entry = $timestamp . ': ' . $activity . "\n";
+    if ($add_day_separator) {
+        $log_entry = "\n" . $log_entry;
+    }
 
     if (file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX) === false) {
         echo "Error: Could not write to log file\n";
