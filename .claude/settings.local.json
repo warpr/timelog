@@ -1,6 +1,12 @@
 {
     "permissions": {
-        "allow": ["Bash(git add:*)", "Bash(git commit:*)", "Bash(git log:*)"],
+        "allow": [
+            "Bash(git add:*)",
+            "Bash(git commit:*)",
+            "Bash(git log:*)",
+            "Bash(timedatectl show:*)",
+            "Bash(php:*)"
+        ],
         "deny": []
     }
 }

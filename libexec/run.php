@@ -12,6 +12,35 @@
 
 declare(strict_types=1);
 
+function get_timezone(): string
+{
+    // Try reading from timedatectl (systemd systems) first
+    $timedatectl_output = shell_exec('timedatectl show --property=Timezone --value 2>/dev/null');
+    if ($timedatectl_output !== null) {
+        $system_timezone = trim($timedatectl_output);
+        if (!empty($system_timezone)) {
+            return $system_timezone;
+        }
+    }
+
+    // Try reading from /etc/timezone (Debian/Ubuntu)
+    if (file_exists('/etc/timezone')) {
+        $system_timezone = trim(file_get_contents('/etc/timezone'));
+        if (!empty($system_timezone)) {
+            return $system_timezone;
+        }
+    }
+
+    // Try to get timezone from PHP default
+    $timezone = date_default_timezone_get();
+    if (!empty($timezone)) {
+        return $timezone;
+    }
+
+    // Fallback to Europe/Amsterdam for UTC-based timezones
+    return 'Europe/Amsterdam';
+}
+
 function get_last_log_line(string $log_file): ?string
 {
     if (!file_exists($log_file)) {
@@ -53,6 +82,10 @@ function main(): void
         echo "Usage: tl <activity description>\n";
         exit(1);
     }
+
+    // Set timezone for consistent timestamp formatting
+    $timezone = get_timezone();
+    date_default_timezone_set($timezone);
 
     $activity = implode(' ', array_slice($argv, 1));
     $timestamp = date('Y-m-d H:i');
