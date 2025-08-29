@@ -131,12 +131,24 @@ function print_report(array $summary): void
         unset($summary['procrastination **']); // Remove from main list
     }
 
-    // Print productive tasks
+    // Print productive tasks and calculate total
+    $total_productive_seconds = 0;
     foreach ($summary as $task_name => $total_seconds) {
         $hours = floor($total_seconds / 3600);
         $minutes = floor(($total_seconds % 3600) / 60);
 
         $hours_str = $hours > 0 ? $hours . 'h' : '';
         printf("%6s %3sm    %s\n", $hours_str, $minutes, $task_name);
+
+        $total_productive_seconds += $total_seconds;
+    }
+
+    // Print total productive time if there are productive tasks
+    if ($total_productive_seconds > 0) {
+        echo "\n";
+        $hours = floor($total_productive_seconds / 3600);
+        $minutes = floor(($total_productive_seconds % 3600) / 60);
+        $hours_str = $hours > 0 ? $hours . 'h' : '';
+        printf("%6s %3sm    %s\n", $hours_str, $minutes, 'total productive time');
     }
 }
