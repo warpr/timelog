@@ -136,6 +136,9 @@ class summary
         }
 
         // Print productive tasks and calculate total
+        // Sort productive tasks alphabetically
+        ksort($summary);
+
         $total_productive_seconds = 0;
         foreach ($summary as $task_name => $total_seconds) {
             $hours = floor($total_seconds / 3600);
