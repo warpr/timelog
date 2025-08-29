@@ -28,15 +28,18 @@ function main(array $files): void
         help();
     }
 
+    try {
+        $timelog = new timelog_txt();
+    } catch (\Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
+        exit(1);
+    }
+
     $activity = implode(' ', $files);
     $timestamp = date('Y-m-d H:i');
     $current_date = date('Y-m-d');
 
-    print_r(compact('activity', 'timestamp', 'current_date'));
-
-    $log_file = timelog_txt::get_log_file_path();
-
-    $last_line = timelog_txt::get_last_log_line($log_file);
+    $last_line = $timelog->get_last_log_line();
     $add_day_separator = false;
 
     if ($last_line !== null) {
@@ -51,7 +54,7 @@ function main(array $files): void
         $log_entry = "\n" . $log_entry;
     }
 
-    if (file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX) === false) {
+    if (!$timelog->append_log_entry($log_entry)) {
         echo "Error: Could not write to log file\n";
         exit(1);
     }

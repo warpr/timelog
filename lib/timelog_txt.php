@@ -14,13 +14,23 @@ declare(strict_types=1);
 namespace timelog;
 
 class timelog_txt {
-    static function get_last_log_line(string $log_file): ?string
+    private string $log_file_path;
+
+    function __construct() {
+        $home_dir = getenv('HOME');
+        if ($home_dir === false) {
+            throw new \Exception("Could not determine home directory");
+        }
+        $this->log_file_path = $home_dir . '/timelog.txt';
+    }
+
+    function get_last_log_line(): ?string
     {
-        if (!file_exists($log_file)) {
+        if (!file_exists($this->log_file_path)) {
             return null;
         }
 
-        $file = file($log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $file = file($this->log_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($file === false || empty($file)) {
             return null;
         }
@@ -36,14 +46,13 @@ class timelog_txt {
         return null;
     }
 
-    static function get_log_file_path(): string
+    function append_log_entry(string $entry): bool
     {
-        $home_dir = getenv('HOME');
-        if ($home_dir === false) {
-            echo "Error: Could not determine home directory\n";
-            exit(1);
-        }
+        return file_put_contents($this->log_file_path, $entry, FILE_APPEND | LOCK_EX) !== false;
+    }
 
-        return $home_dir . '/timelog.txt';
+    function get_log_file_path(): string
+    {
+        return $this->log_file_path;
     }
 }
