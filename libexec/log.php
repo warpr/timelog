@@ -1,0 +1,61 @@
+<?php
+/**
+ *   Copyright (C) 2025  Kuno Woudt <kuno@frob.nl>
+ *
+ *   This program is free software: you can redistribute it and/or modify it under the
+ *   terms of the GNU Affero General Public License as published by the Free Software
+ *   Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ *   SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+declare(strict_types=1);
+
+use timelog\timelog_txt;
+use timelog\timezone;
+
+function help() {
+        echo "Usage: tl <activity description>\n";
+        exit(1);
+}
+
+function main(array $files): void
+{
+    // Set timezone for consistent timestamp formatting
+    timezone::set_default();
+
+    if (empty($files)) {
+        help();
+    }
+
+    $activity = implode(' ', $files);
+    $timestamp = date('Y-m-d H:i');
+    $current_date = date('Y-m-d');
+
+    print_r(compact('activity', 'timestamp', 'current_date'));
+
+    $log_file = timelog_txt::get_log_file_path();
+
+    $last_line = timelog_txt::get_last_log_line($log_file);
+    $add_day_separator = false;
+
+    if ($last_line !== null) {
+        $last_date = timelog_txt::extract_date_from_log_line($last_line);
+        if ($last_date !== null && $last_date !== $current_date) {
+            $add_day_separator = true;
+        }
+    }
+
+    $log_entry = $timestamp . ': ' . $activity . "\n";
+    if ($add_day_separator) {
+        $log_entry = "\n" . $log_entry;
+    }
+
+    if (file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX) === false) {
+        echo "Error: Could not write to log file\n";
+        exit(1);
+    }
+
+    echo 'Logged: ' . trim($log_entry) . "\n";
+}
+

@@ -1,7 +1,6 @@
-#!/usr/bin/env php
 <?php
 /**
- *   Copyright (C) 2024  Kuno Woudt <kuno@frob.nl>
+ *   Copyright (C) 2025  Kuno Woudt <kuno@frob.nl>
  *
  *   This program is free software: you can redistribute it and/or modify it under the
  *   terms of the GNU Affero General Public License as published by the Free Software
@@ -12,7 +11,10 @@
 
 declare(strict_types=1);
 
-function get_timezone(): string
+namespace timelog;
+
+class timezone {
+static function get_timezone(): string
 {
     // Try reading from timedatectl (systemd systems) first
     $timedatectl_output = shell_exec('timedatectl show --property=Timezone --value 2>/dev/null');
@@ -56,78 +58,8 @@ function get_timezone(): string
     return 'Europe/Amsterdam';
 }
 
-function get_last_log_line(string $log_file): ?string
-{
-    if (!file_exists($log_file)) {
-        return null;
+    static function set_default() {
+        $timezone = static::get_timezone();
+        date_default_timezone_set($timezone);
     }
-
-    $file = file($log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($file === false || empty($file)) {
-        return null;
-    }
-
-    return end($file);
 }
-
-function extract_date_from_log_line(string $line): ?string
-{
-    if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $line, $matches)) {
-        return $matches[1];
-    }
-    return null;
-}
-
-function get_log_file_path(): string
-{
-    $home_dir = getenv('HOME');
-    if ($home_dir === false) {
-        echo "Error: Could not determine home directory\n";
-        exit(1);
-    }
-
-    return $home_dir . '/timelog.txt';
-}
-
-function main(): void
-{
-    global $argv;
-
-    if (count($argv) < 2) {
-        echo "Usage: tl <activity description>\n";
-        exit(1);
-    }
-
-    // Set timezone for consistent timestamp formatting
-    $timezone = get_timezone();
-    date_default_timezone_set($timezone);
-
-    $activity = implode(' ', array_slice($argv, 1));
-    $timestamp = date('Y-m-d H:i');
-    $current_date = date('Y-m-d');
-
-    $log_file = get_log_file_path();
-
-    $last_line = get_last_log_line($log_file);
-    $add_day_separator = false;
-
-    if ($last_line !== null) {
-        $last_date = extract_date_from_log_line($last_line);
-        if ($last_date !== null && $last_date !== $current_date) {
-            $add_day_separator = true;
-        }
-    }
-
-    $log_entry = $timestamp . ': ' . $activity . "\n";
-    if ($add_day_separator) {
-        $log_entry = "\n" . $log_entry;
-    }
-
-    if (file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX) === false) {
-        echo "Error: Could not write to log file\n";
-        exit(1);
-    }
-
-    echo 'Logged: ' . trim($log_entry) . "\n";
-}
-

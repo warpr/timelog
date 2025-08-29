@@ -1,0 +1,24 @@
+{
+    "autoload": {
+        "psr-4": {
+            "timelog\\": "lib/"
+        }
+    },
+    "bin": [
+        "bin/tl"
+    ],
+    "license": "AGPL-3.0-or-later",
+    "name": "warpr/timelog",
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:warpr/ark.git"
+        }
+    ],
+    "require": {
+        "warpr/ark": "dev-main"
+    },
+    "scripts": {
+        "post-install-cmd": "git config --local core.hooksPath etc/hooks"
+    }
+}
