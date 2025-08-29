@@ -16,7 +16,7 @@ use timelog\timezone;
 
 function help()
 {
-    echo "Usage: tl <activity description>\n";
+    echo "Usage: tl log <activity description>\n";
     exit(1);
 }
 
