@@ -14,9 +14,10 @@ declare(strict_types=1);
 use timelog\timelog_txt;
 use timelog\timezone;
 
-function help() {
-        echo "Usage: tl <activity description>\n";
-        exit(1);
+function help()
+{
+    echo "Usage: tl <activity description>\n";
+    exit(1);
 }
 
 function main(array $files): void
@@ -31,7 +32,7 @@ function main(array $files): void
     try {
         $timelog = new timelog_txt();
     } catch (\Exception $e) {
-        echo "Error: " . $e->getMessage() . "\n";
+        echo 'Error: ' . $e->getMessage() . "\n";
         exit(1);
     }
 
@@ -57,10 +58,9 @@ function main(array $files): void
     try {
         $timelog->append_log_entry($log_entry);
     } catch (\Exception $e) {
-        echo "Error: " . $e->getMessage() . "\n";
+        echo 'Error: ' . $e->getMessage() . "\n";
         exit(1);
     }
 
     echo 'Logged: ' . trim($log_entry) . "\n";
 }
-
