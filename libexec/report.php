@@ -47,49 +47,76 @@ function main(array $files): void
 function generate_time_summary(array $entries): array
 {
     $summary = [];
-    $previous_entry = null;
-    $first_entry_of_day = [];
 
-    // First pass: identify which entries are the first of each day
+    // Group entries by date
+    $entries_by_date = [];
     foreach ($entries as $entry_line) {
         $entry = timelog_txt::parse_log_line($entry_line);
         if ($entry === null) {
             continue;
         }
-
-        if (!isset($first_entry_of_day[$entry['date']])) {
-            $first_entry_of_day[$entry['date']] = $entry_line;
-        }
+        $entries_by_date[$entry['date']][] = $entry;
     }
 
-    // Second pass: calculate task durations, skipping first entries of each day
-    foreach ($entries as $entry_line) {
-        $entry = timelog_txt::parse_log_line($entry_line);
-        if ($entry === null) {
+    // Process each day separately
+    foreach ($entries_by_date as $date => $day_entries) {
+        if (count($day_entries) < 2) {
+            // Skip days with only one entry (just start time, no tasks)
             continue;
         }
 
-        // Only count tasks if the previous entry wasn't the first entry of its day
-        if ($previous_entry !== null && $previous_entry['date'] === $entry['date']) {
-            $is_previous_first_of_day =
-                $first_entry_of_day[$previous_entry['date']] === $previous_entry_line;
+        // First entry is the start time, not a task
+        $start_time = new \DateTime($day_entries[0]['datetime']);
 
-            if (!$is_previous_first_of_day) {
-                $start_time = new \DateTime($previous_entry['datetime']);
-                $end_time = new \DateTime($entry['datetime']);
-                $duration = $end_time->getTimestamp() - $start_time->getTimestamp();
+        // Process each subsequent entry as the END of a task
+        // Entry i=1 ends the first task (from i=0 to i=1)
+        // Entry i=2 ends the second task (from i=1 to i=2), etc.
+        for ($i = 1; $i < count($day_entries); $i++) {
+            $task_start_entry = $day_entries[$i - 1];
+            $task_end_entry = $day_entries[$i];
 
-                $task_name = get_task_name($previous_entry['description']);
+            $task_start_time = new \DateTime($task_start_entry['datetime']);
+            $task_end_time = new \DateTime($task_end_entry['datetime']);
+            $duration = $task_end_time->getTimestamp() - $task_start_time->getTimestamp();
 
-                if (!isset($summary[$task_name])) {
-                    $summary[$task_name] = 0;
-                }
-                $summary[$task_name] += $duration;
+            // The task description is from the END entry, not the start entry
+            $task_name = get_task_name($task_end_entry['description']);
+
+            if (!isset($summary[$task_name])) {
+                $summary[$task_name] = 0;
+            }
+            $summary[$task_name] += $duration;
+        }
+
+        // Handle the last task of the day
+        $last_task_entry = end($day_entries);
+        $start_of_last_task = new \DateTime($last_task_entry['datetime']);
+        $now = new \DateTime();
+
+        // If it's today, calculate until now, otherwise assume end of workday
+        if ($date === $now->format('Y-m-d')) {
+            $end_of_last_task = $now;
+        } else {
+            // Assume the task went until 18:00 (6 PM) for past days
+            $end_of_last_task = new \DateTime($date . ' 18:00');
+            // But if that would be before the start time, use start time + 1 hour as fallback
+            if ($end_of_last_task <= $start_of_last_task) {
+                $end_of_last_task = clone $start_of_last_task;
+                $end_of_last_task->modify('+1 hour');
             }
         }
 
-        $previous_entry = $entry;
-        $previous_entry_line = $entry_line;
+        $duration = $end_of_last_task->getTimestamp() - $start_of_last_task->getTimestamp();
+
+        // Only count positive durations
+        if ($duration > 0) {
+            $task_name = get_task_name($last_task_entry['description']);
+
+            if (!isset($summary[$task_name])) {
+                $summary[$task_name] = 0;
+            }
+            $summary[$task_name] += $duration;
+        }
     }
 
     // Sort by total time spent (descending)
