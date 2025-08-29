@@ -64,40 +64,7 @@ class summary
                 }
                 $summary[$task_name] += $duration;
             }
-
-            // Handle the last task of the day
-            $last_task_entry = end($day_entries);
-            $start_of_last_task = new \DateTime($last_task_entry['datetime']);
-            $now = new \DateTime();
-
-            // If it's today, calculate until now, otherwise assume end of workday
-            if ($date === $now->format('Y-m-d')) {
-                $end_of_last_task = $now;
-            } else {
-                // Assume the task went until 18:00 (6 PM) for past days
-                $end_of_last_task = new \DateTime($date . ' 18:00');
-                // But if that would be before the start time, use start time + 1 hour as fallback
-                if ($end_of_last_task <= $start_of_last_task) {
-                    $end_of_last_task = clone $start_of_last_task;
-                    $end_of_last_task->modify('+1 hour');
-                }
-            }
-
-            $duration = $end_of_last_task->getTimestamp() - $start_of_last_task->getTimestamp();
-
-            // Only count positive durations
-            if ($duration > 0) {
-                $task_name = self::get_task_name($last_task_entry['description']);
-
-                if (!isset($summary[$task_name])) {
-                    $summary[$task_name] = 0;
-                }
-                $summary[$task_name] += $duration;
-            }
         }
-
-        // Sort by total time spent (descending)
-        arsort($summary);
 
         return $summary;
     }
@@ -156,7 +123,7 @@ class summary
             $hours = floor($total_productive_seconds / 3600);
             $minutes = floor(($total_productive_seconds % 3600) / 60);
             $hours_str = $hours > 0 ? $hours . 'h' : '';
-            printf("%6s %3sm    %s\n", $hours_str, $minutes, 'total productive time');
+            printf("%6s %3sm    %s\n\n", $hours_str, $minutes, 'total productive time');
         }
     }
 }
