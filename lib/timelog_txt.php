@@ -46,9 +46,11 @@ class timelog_txt {
         return null;
     }
 
-    function append_log_entry(string $entry): bool
+    function append_log_entry(string $entry): void
     {
-        return file_put_contents($this->log_file_path, $entry, FILE_APPEND | LOCK_EX) !== false;
+        if (file_put_contents($this->log_file_path, $entry, FILE_APPEND | LOCK_EX) === false) {
+            throw new \Exception("Could not write to log file: " . $this->log_file_path);
+        }
     }
 
     function get_log_file_path(): string

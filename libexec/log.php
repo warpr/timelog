@@ -54,8 +54,10 @@ function main(array $files): void
         $log_entry = "\n" . $log_entry;
     }
 
-    if (!$timelog->append_log_entry($log_entry)) {
-        echo "Error: Could not write to log file\n";
+    try {
+        $timelog->append_log_entry($log_entry);
+    } catch (\Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
         exit(1);
     }
 
